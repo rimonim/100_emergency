@@ -64,9 +64,9 @@ american %>%
 - מבוטל/נסוג (Cancellation/Withdrawn)   8.2 %
 - חוזר (Repeat)     1.8 %  : כלומר, משהו כבר התקשר בנוגע לאורוע הזה? אותו ב"א כבר התקשר?
 - מעצר (Arrest Issued)      1.6 % 
-- נתינת אזהרה (Warning Issued)        1.1 %  :
-- נתינת דוח  (Citation Issued)          0.8 %  :
-- תלונת שוא (False Complaint)          0.6 %  :
-- אחר (other)                    0.2 %  :
+- נתינת אזהרה (Warning Issued)        1.1 % 
+- נתינת דוח  (Citation Issued)          0.8 %  
+- תלונת שוא (False Complaint)          0.6 % 
+- אחר (other)                    0.2 %  
 
-אוקי, עדיין לא ברור לגמרי. למרבה המזל, מייצרי מערך הנתונים הסבירו את החשיבה שלהם [פה](https://medium.com/dataclinic/creating-a-consolidated-taxonomy-for-911-call-data-across-different-us-cities-part-2-9600cb09abfd).
+אוקיי, עדיין לא ברור לגמרי. למרבה המזל, מייצרי מערך הנתונים הסבירו את החשיבה שלהם [פה](https://medium.com/dataclinic/creating-a-consolidated-taxonomy-for-911-call-data-across-different-us-cities-part-2-9600cb09abfd).
