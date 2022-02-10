@@ -1,6 +1,7 @@
 בס"ד
 
 
+
 לפני שנתחיל לנתח נתונים ישראליים, באו נלמד כמה נתונים בסיסיים מהמערכת האמריקאית. הנתונים האלה ישמשו לנו כהשערות אפריוריות בניתוח הנתונים הישראליים. חשוב שתהיה לנו הבנה אפריורית מבוססת מכיוון שהנתונים הישראלים שנמצאים ברשותנו כרגע הם לא רק דלים מאוד אלא גם לעתים גם לא ברורים מצד משמעות המשתנים שבם. לעומת זאת, יש לנו [מערך נתונים נקי וברור](https://github.com/tsdataclinic/Vera/tree/master/data) עם מידע מארבעה ערים אמריקאים (ניו אורלינס, דלס, דטרויט, וצ'רלסטון) על סיווג האירועים, ייזום השיחות (מהמשטרה או מהציבור), תוצאת האירוע, והרבה יותר. 
 ``` r
 # Data manipulation
@@ -51,8 +52,21 @@ american %>%
     labs(title = "Outcome of 911 calls in New Orleans, Charleston, and Dallas", x = "", y = "Percent of Total Cases") +
     theme(plot.title = element_text(hjust = .5), legend.position = "none")
 ```
+<p align="center">
 <img src= "figures/moked3.png"/>
+</p>
 
-אחלה תרשים. מה זה אומר? שאלה טובה - יש הרבה קטגוריות פה, ולא ברור מה הם בדיוק. למרבה המזל, מיצרי מערך הנתונים הסבירו את תהליך העבודה שלהם [פה](https://medium.com/dataclinic/creating-a-consolidated-taxonomy-for-911-call-data-across-different-us-cities-part-2-9600cb09abfd)
+אחלה תרשים. מה זה אומר? שאלה טובה - יש הרבה קטגוריות פה, ולא ברור מה הם בדיוק. נעבור אחד אחד ונתרגם קצת:
+- פעילות אכיפה (Enforcement Activity)  47.2 %  : שליחת שוטרים לאתר בלא מעצר
+- יצירת דו"ח (Report Generated)        15.7 %  : אני חושב שזה אומר שלא שלחו ניידת, אבל דיווחו על פשיעה או על פעילות חשודה
+- לא מבוסס (Unfounded)       13.6 %
+- פעילות בלא מעצר (Non-Arrest Activity)   9.2 %  : אני לא בטוח מה ההבדל בין זה לבין "Enforcement Activity" 
+- מבוטל/נסוג (Cancellation/Withdrawn)   8.2 %
+- חוזר (Repeat)     1.8 %  : כלומר, משהו כבר התקשר בנוגע לאורוע הזה? אותו ב"א כבר התקשר?
+- מעצר (Arrest Issued)      1.6 % 
+- נתינת אזהרה (Warning Issued)        1.1 %  :
+- נתינת דוח  (Citation Issued)          0.8 %  :
+- תלונת שוא (False Complaint)          0.6 %  :
+- אחר (other)                    0.2 %  :
 
-
+אוקי, עדיין לא ברור לגמרי. למרבה המזל, מייצרי מערך הנתונים הסבירו את החשיבה שלהם [פה](https://medium.com/dataclinic/creating-a-consolidated-taxonomy-for-911-call-data-across-different-us-cities-part-2-9600cb09abfd).
