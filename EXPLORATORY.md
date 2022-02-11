@@ -76,6 +76,11 @@ american %>%
 
 אז העבודה שלנו מסובכת יותר ממה שציפינו. אבל עדיין יש הרבה ללמוד. צריך לזכור שכרגע אנחנו מחפשים רק רקע ככלי כדי להבין את הנתונים הישראליים. אני אציג פה עוד כמה גרפים, ואז אשתדל לסכם את מה שיכלתי ללמוד מהם.
 
+אם לוקחים רק את הפניות שבוודאי לא מגיעים מהמשטרה, התמונת התוצאות נהיה פשוטה יותר (אשמה של צ'רלסטון, שמסבכת את כל עבודת הסיווג אבל אינה מדווחת על ייזום השיחות). 
+<p align="center">
+<img src= "figures/moked7.png"/>
+</p>
+
 ראינו את תוצאות הפניות למוקד. מה עם סוגי הפניות לכתחילה?
 <p align="center">
 <img src= "figures/moked5.png"/>
@@ -90,13 +95,12 @@ american %>%
   mutate(call_type = str_wrap(call_type, width = 18)) %>%
   filter(is.na(disposition) == F, 
          is.na(call_type) == F,
-         city != "Detroit", 
-         self_initiated != "Yes") %>%
+         disposition != "Unknown", 
+         self_initiated %in% c("No", "other")) %>%
   ggplot(aes(x = "", fill = disposition)) +
     facet_wrap(~call_type, nrow = 4) +
     geom_bar(position = "fill") +
-    scale_fill_brew
-    ]er(name = "Outcome", palette = "Paired") +
+    scale_fill_brewer(name = "Outcome", palette = "Paired") +
     coord_polar("y") +
     theme_void()
 ```
