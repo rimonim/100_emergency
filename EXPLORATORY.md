@@ -54,20 +54,20 @@ american %>%
     theme(plot.title = element_text(hjust = .5), legend.position = "none")
 ```
 <p align="center">
-<img src= "figures/moked3.png"/>
+<img src= "figures/moked4.png"/>
 </p>
 
 אחלה תרשים. מה זה אומר? שאלה טובה - יש הרבה קטגוריות פה, ולא ברור מה הם בדיוק. נעבור אחד אחד ונתרגם קצת:
-- פעילות אכיפה (Enforcement Activity)  47.2 %  : שליחת שוטרים לאתר בלא מעצר
-- יצירת דו"ח (Report Generated)        15.7 %  : אני חושב שזה אומר שלא שלחו ניידת, אבל דיווחו על פשיעה או על פעילות חשודה
-- לא מבוסס (Unfounded)       13.6 %
-- פעילות בלא מעצר (Non-Arrest Activity)   9.2 %  : אני לא בטוח מה ההבדל בין זה לבין "Enforcement Activity" 
-- מבוטל/נסוג (Cancellation/Withdrawn)   8.2 %
-- חוזר (Repeat)     1.8 %  : כלומר, משהו כבר התקשר בנוגע לאורוע הזה? אותו ב"א כבר התקשר?
-- מעצר (Arrest Issued)      1.6 % 
-- נתינת אזהרה (Warning Issued)        1.1 % 
-- נתינת דוח  (Citation Issued)          0.8 %  
-- תלונת שוא (False Complaint)          0.6 % 
+- פעילות אכיפה (Enforcement Activity)  39.9 %  : שליחת שוטרים לאתר בלא מעצר
+- יצירת דו"ח (Report Generated)        16.8 %  : אני חושב שזה אומר שלא שלחו ניידת, אבל דיווחו על פשיעה או על פעילות חשודה
+- לא מבוסס (Unfounded)       15.7 %
+- פעילות בלא מעצר (Non-Arrest Activity)   10.8 %  : אני לא בטוח מה ההבדל בין זה לבין "Enforcement Activity" 
+- מבוטל/נסוג (Cancellation/Withdrawn)  9.67 %
+- חוזר (Repeat)     2.1 %  : כלומר, משהו כבר התקשר בנוגע לאורוע הזה? אותו ב"א כבר התקשר?
+- מעצר (Arrest Issued)      1.9 % 
+- נתינת אזהרה (Warning Issued)        1.3 % 
+- נתינת דוח  (Citation Issued)          0.9 %  
+- תלונת שוא (False Complaint)          0.7 % 
 - אחר (other)                    0.2 %  
 
 אוקיי, עדיין לא ברור לגמרי. למרבה המזל, מייצרי מערך הנתונים הסבירו את החשיבה שלהם [פה](https://medium.com/dataclinic/creating-a-consolidated-taxonomy-for-911-call-data-across-different-us-cities-part-2-9600cb09abfd).
