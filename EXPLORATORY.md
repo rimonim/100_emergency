@@ -95,7 +95,8 @@ american %>%
   ggplot(aes(x = "", fill = disposition)) +
     facet_wrap(~call_type, nrow = 4) +
     geom_bar(position = "fill") +
-    scale_fill_brewer(name = "Outcome", palette = "Paired") +
+    scale_fill_brew
+    ]er(name = "Outcome", palette = "Paired") +
     coord_polar("y") +
     theme_void()
 ```
