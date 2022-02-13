@@ -118,6 +118,22 @@ american %>%
 פניות הקשורות לעבירות רכוש, עבירות תנועה, אלימות במשפחה, ופשע אלים מסתיימים הרבה פעמים בפעילות אכיפה, אבל יותר נפוץ שהם מתגלים כחסרי ביסוס, והרבה יותר נפוץ שהם מסתיימים (מבחינת המשטרה) ביצירת דו"ח. אני מניח שבהקשר הזה "יצירת דו"ח" אומר שהאירוע הסתיים כך שהמצב כבר לא היה דחוף, ולכן דיווחו על האירוע לצורך טיפול עתידי. מקרי חירום רפואי נראים דומים, רק בלי הסיכוי שהם לא מבוססים. כאן אבל, הייתי רוצה להאמין שב"יצירת דו"ח" הכוונה להתרעה בפני הגופים הרלוונטיים - אמבולנס וכו'. כנ"ל לגבי יצירת דו"חות בשריפות, אלא ששוטרים נוטים כן להגיע לשריפות. נעדרים, עבירות מין, חשד, ואזעקות כולם מחולקים בין פעילות אכיפה לחסר ביסוס. קריאות הקשורות לבריאות הנפש נוטים להענות עם "פעילות אכיפה", אבל לפעמים רק ביצירת דו"ח.
 
 לוודא שמה שאנחנו רואים ניתן להכללה, נעיין רגע בנתונים המקבילים מסיאטל, שלא היה מוצג לעיל, ושהקטגוריות שלה הן קצת יותר מפורטות:
+```r
+seattle <- read_csv("/Users/louisteitelbaum/Downloads/Seattle.csv.zip")[sample(1:4206691, 20000),]
+seattle %>%
+  mutate(call_type = str_wrap(call_type, width = 18)) %>%
+  filter(is.na(disposition) == F, 
+         is.na(call_type) == F,
+         disposition != "Unknown", 
+         self_initiated %in% c("No", "other")) %>%
+  ggplot(aes(x = "", fill = disposition)) +
+  facet_wrap(~call_type, nrow = 4) +
+  geom_bar(position = "fill") +
+  coord_polar("y") +
+  theme_void() +
+  labs(title = "Incident Outcomes by Type in Seattle") +
+  theme(plot.title = element_text(hjust = .5) , legend.title = element_blank())
+```
 
 <p align="center">
 <img src= "figures/moked9.png"/>
