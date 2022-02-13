@@ -194,3 +194,34 @@ seattle_raw %>%
 - קרוב לחצי מהשיחות שמגיעות למוקד לא מובילות לפעילות משטרתית אקטיבית (סיאטל - 52%, ניו אורלינס - 45%). עם זאת, רוב מוחלט מהמקרים האלה נסגרים או בדיווח משטרתי (לפעמים לאמבולנס או לכבאות) או באי-יכולת לאתר את האירוע. אולי 5% מתגלים כתלונת שוא כלשהי. כ7% בוטלות תוך כדי השיחה.
 - קשה לדעת כמה פניות אפשר להחשב כמקרי חירום, כאשר הרבה מהאירועים מסוג הזה כבר הסתיימו בזמן השיחה ולכן לא קיבלו מענה משטרתי. אפשר להגיד, אבל, שאירועים הקשורים לבריאות הנפש מייצגים כ3% של שיחות (רובם ב"א אבדני, חולה נפש מסתובב ברחוב באופן לא מסוכן, או מנת יתר). חירום רפואי מייצג פחוז מ1%.
 - קשה לדעת כמה זהויים שגויים יש, אבל כן אפשר להגיד ש*יש* זיהוי ראשוני ע"י המוקדן, וזיהוי סופי אחרי סיום האירוע.
+- בכללי, כל הנתונים מהמוקד קיימים בראש ובראשונה לעזור לפעילות המוקד. כתוצאה מזאת, אין שום סטנדרטיזציה, וקשה לקבל שום תמונה רחבה שהיא על העניינים.
+
+# הנתונים הישראליים
+נתונים על מוקד 100 מ[פה](https://www.gov.il/BlobFolder/reports/police_statistical_abstract_2020/he/%D7%94%D7%A9%D7%A0%D7%AA%D7%95%D7%9F%20%D7%94%D7%A1%D7%98%D7%98%D7%99%D7%A1%D7%98%D7%99%20%D7%A9%D7%9C%20%D7%9E%D7%A9%D7%98%D7%A8%D7%AA%20%D7%99%D7%A9%D7%A8%D7%90%D7%9C%20%D7%9C%D7%A9%D7%A0%D7%AA%202020.pdf), [פה](https://www.odata.org.il/dataset/f4a3cbdb-4c9f-4445-ac8e-221101f825c8), [ופה](https://www.odata.org.il/dataset/e-haim). על אוכלוסייה מ[פה]().
+```r
+# Incoming calls by region, city, day of week (Jan 1 - March 21, 2020)
+day.place.1 <- read_csv("/Users/louisteitelbaum/Documents/moked_janfebmar.csv",
+                        locale = locale(date_names = "he", encoding = "UTF-8"))
+
+# Incoming calls by region, city, day of week (March 21 - April 30, 2020)
+day.place.2 <- read_csv("/Users/louisteitelbaum/Documents/moked_marapr.csv",
+                        locale = locale(date_names = "he", encoding = "UTF-8"))
+
+# General Population Demographics
+demographics <- read_csv("/Users/louisteitelbaum/Documents/demographics/demographics.csv")
+demographics <- demographics[-(1:11), c(2, 8, 11)]
+names(demographics) <- c("ir", "pop", "arabs")
+demographics$pop[demographics$pop == "-"] <- 0
+demographics$arabs[demographics$arabs == "-"] <- 0
+demographics$pop <- as.numeric(gsub(",", "", demographics$pop))
+demographics$arabs <- as.numeric(gsub(",", "", demographics$arabs))
+
+# Incidents (unclear what this means exactly) by city, type, subtype, year, and quarter (2015-2017)
+type.place.year <- read_csv("/Users/louisteitelbaum/Documents/moked100.csv")
+type.place.year <- type.place.year[-(1:6), c(1:3, 5:6, 11, 16)]
+names(type.place.year) <- c("ir", "type", "subtype", "total", "2015", "2016", "2017Q1-2")
+type.place.year <- type.place.year %>%
+  mutate(across(4:7, ~replace(., . == "$", "1"))) %>%
+  mutate(across(4:7, ~replace(., . == "-", "0"))) %>%
+  type_convert()
+```
