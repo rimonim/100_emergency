@@ -260,7 +260,7 @@ ggplot(weekdays, aes(day, n, fill = type)) +
 <img src= "figures/moked14.png"/>
 </p>
 
-לא צריך כלים סטטיסטים לראות שמספר האירועים נמוך יותר בשבת. עדיין קצת קשה לראות את הפרופורציות. הנה השוואה בין פרופוציות הממוצעות של ימי השבוע לבין הפרופורציות של שבת:
+לא צריך כלים סטטיסטים לראות שמספר האירועים יורד בשבת. עדיין קצת קשה לראות את הפרופורציות. הנה השוואה בין פרופוציות הממוצעות של ימי השבוע לבין הפרופורציות של שבת:
 ```r
 weekdays %>%
   mutate(shabbat = recode(if_else(day == "שבת", "Y", "N"), "Y" = "שבת", "N" = "ימות השבוע")) %>%
@@ -358,3 +358,122 @@ day.place[day.place$ir %in% unique(day.place$ir)[sample(1:56, 25)], ] %>%
 
 אני לא רואה שום נטייה פה. אולי אני פשות לא מכיר כמה דתיים יש בכל עיר. אם נדע את גודל האוכלוסייה הדתית בכל עיר (בייחס לאוכלוססיה הככלית כמובן) נוכל לבנות מודל סטטיסטי ולראות אם אוכלוסייה דתית יותר גורמת להנמחת הפניות למוקד בשבת.
 בליתי הרבה זמן בחיפוש הנתונים האלה. [מפקד האוכלוסין](https://www.cbs.gov.il/he/settlements/Pages/default.aspx?mode=Yeshuv) סופר כמה יהודים יש בכל עיר, אבל לא כמה דתיים. [מרכז המחקר פיו](https://www.pewforum.org/2016/03/08/israels-religiously-divided-society/) מונה את הדתיים למיניהם אבל מחלק רק למחוזות, לא ערים. נצטרך למצוא [proxy](https://en.wikipedia.org/wiki/Proxy_(statistics)) - משתנה שמתואם מספיק ליעד. 
+ב[אתר 'כיפה'](https://www.kipa.co.il/%D7%91%D7%AA%D7%99-%D7%9B%D7%A0%D7%A1%D7%AA/) יש רשימות של כל בתי הכנסת וכל המקוואות בארץ, לפי ערים. אלך על זה.
+
+```r
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# WEB SCRAPING
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Number of synagogues by city in Israel
+shuls_link <- url("https://www.kipa.co.il/%D7%91%D7%AA%D7%99-%D7%9B%D7%A0%D7%A1%D7%AA/%D7%91%D7%AA%D7%99-%D7%9B%D7%A0%D7%A1%D7%AA-%D7%9C%D7%A4%D7%99-%D7%A2%D7%99%D7%A8/", "rb")
+shuls_page <- read_html(shuls_link)
+shul_cities <- shuls_page %>% html_elements(".mikve-list a") %>% html_text()
+shul_city_links <- shuls_page %>% html_elements(".mikve-list a") %>% html_attr("href")
+
+get_shuls <- function(city_link){
+  city_page <- read_html(city_link)
+  nshuls <- city_page %>% html_elements("thead+ tbody .clickable-row td:nth-child(1)") %>% length()
+  npages <- city_page %>% html_elements(".pager a") %>% html_text()
+  npages <- max(na.omit(as.numeric(head(npages, -1))))
+  if(npages > 0){
+    last_page <- read_html(paste(city_link, "page/", npages, "/", sep = ""))
+    nshuls_last <- last_page %>% html_elements("thead+ tbody .clickable-row td:nth-child(1)") %>% length()
+    nshuls <- nshuls + 20*(npages-2) + nshuls_last
+  }
+  nshuls
+}
+    # I tried this with sapply and got an error 410 somewhere along the line. This loop is my way of sidestepping that error.
+shuls <- tibble(ir = shul_cities,
+                shuls = rep(NA, length(shul_city_links)))
+for (city in 1:length(shul_cities)) {
+  try(
+    shuls$shuls[city] <- get_shuls(shul_city_links[city])
+  )
+}
+
+# Number of mikvaot by city in Israel
+mikvaot_link <- "https://www.kipa.co.il/%D7%9E%D7%A7%D7%95%D7%95%D7%90%D7%95%D7%AA/%D7%9E%D7%A7%D7%95%D7%95%D7%90%D7%95%D7%AA-%D7%9C%D7%A4%D7%99-%D7%A2%D7%99%D7%A8/"
+mikvaot_page <- read_html(mikvaot_link)
+mikva_cities <- mikvaot_page %>% html_elements(".synagog a") %>% html_text()
+mikva_city_links <- mikvaot_page %>% html_elements(".synagog a") %>% html_attr("href")
+
+get_mikvaot <- function(city_link){
+  city_page <- read_html(city_link)
+  nmikvaot <- city_page %>% html_elements("td:nth-child(1)") %>% length()
+  npages <- city_page %>% html_elements(".pager a") %>% html_text()
+  npages <- max(na.omit(as.numeric(head(npages, -1))))
+  if(npages > 0){
+    last_page <- read_html(paste(city_link, "page/", npages, "/", sep = ""))
+    nmikvaot_last <- last_page %>% html_elements("thead+ tbody td:nth-child(1)") %>% length()
+    nmikvaot <- nmikvaot + 20*(npages-2) + nmikvaot_last
+  }
+  nmikvaot
+}
+mikvaot <- tibble(ir = mikva_cities,
+                  mikvaot = as.vector(sapply(mikva_city_links, FUN = get_mikvaot)))
+```
+
+לפני שאסמוך על המקוואות ובתי הכנסת, צריך לוודא שהנתונים נראים איך שהיינו מצפים. הם מתואמים אחד אל השני לפחות?
+```r
+shuls %>%
+  left_join(mikvaot) %>%
+  left_join(demographics) %>%
+  mutate(
+    shulspercap = shuls/pop,
+    mikvaotpercap = mikvaot/pop
+  ) %>% 
+  summarise(cor = cor(shulspercap, mikvaotpercap, use = "pairwise.complete.obs"))
+```
+
+כן. מספר בתי הכנסת בעיר מתואם עם מספר המקוואות r=.64. זה הגיוני - יותר בתי כנסת, יותר מקוואות. אפשר גם לראות את מספר בתי הכנסת מול אוכלוסייה הכללית של העיר:
+
+```r
+shuls %>%
+  left_join(demographics) %>%
+  filter(ir != "ירושלים") %>%
+  ggplot(aes(pop, shuls)) +
+    geom_point(aes(color = (shuls/pop > 55/100000))) +
+    geom_smooth(method = "lm", color = "black", alpha = 0, size = 1) +
+    theme_minimal() + 
+    theme(legend.position = "none") +
+    scale_x_continuous(breaks = c(100000, 200000), labels = c("100,000", "200,000")) + 
+    labs(x = "אוכלוסייה",
+         y = "מספר בתי כנסת בעיר")
+```
+
+<p align="center">
+<img src= "figures/shulspopulation.png"/>
+</p>
+
+אפשר להניח שערים שיש להם יותר בתי כנסת ביחס לאוכלוסייה שלהם (צבועים ב`תכלת`) הם אלה שיש להם קהילה דתית מובהקת יותר. 
+אפשר לראות כמה ערים בחלק העליון של הגרף - הם כדוגמת צפת, שיש לה הרבה יותר בתי כנסת מאשר מגיע לה. הערים האדומות בחלק התחתון הם היותר חילוניים או ערביים. 
+
+עכשיו אפשר לשאול את השאלה: האם אוכלוסייה דתית יותר גורמת להנמחת הפניות למוקד בשבת? 
+```r
+# Does more religious Jewish population predict a lower proportion of 100 calls on shabbat?
+require(MASS)
+
+shab.place <- day.place %>%
+  left_join(demographics) %>%
+  filter(pop > 1000) %>%
+  left_join(shuls) %>%
+  left_join(mikvaot) %>%
+  mutate(
+    shulspercap = shuls/pop,
+    mikvaotpercap = mikvaot/pop,
+    peoplepershul = pop/shuls,
+    peoplepermikva = pop/mikvaot,
+  ) %>%
+  filter(yom == "שבת")
+
+mikvamod <- lm(daypercent~peoplepermikva, data = shab.place)
+visualize(mikvamod)
+summary(mikvamod)
+robustmikvamod <- rlm(daypercent~peoplepermikva, data = shab.place)
+summary(robustmikvamod)
+compare.fits(daypercent~peoplepermikva, data = shab.place, mikvamod, robustmikvamod)
+```
+
+בלי להכנס לכל הטכניקה... התשובה היא לא. לא רואים שום קשר לינארי בין אוכלוסייה דתית לפניות למוקד בשבת. אני עוד לא יודע מה לעשות עם זה. אכן, היו נתונים לכל ימי השבוע רק ב42 ערים, וגם אז בהרבה מהם לא היו נתונים לכל אורך הזמן בין ינואר לאפריל 2020. אולי זאת הבעיה? מה שגם מוסיף קושי זה שהנתונים אינם מחולקים לסוגי האירוע - רק לימים. לו היה לי מערך נתונים מחולק גם לימים וגם לערים, אולי הייתי מוצא משהו.
+
