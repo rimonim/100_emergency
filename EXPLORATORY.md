@@ -197,7 +197,7 @@ seattle_raw %>%
 - בכללי, כל הנתונים מהמוקד קיימים בראש ובראשונה לעזור לפעילות המוקד. כתוצאה מזאת, אין שום סטנדרטיזציה, וקשה לקבל שום תמונה רחבה שהיא על העניינים.
 
 # הנתונים הישראליים
-נתונים על מוקד 100 מ[פה](https://www.gov.il/BlobFolder/reports/police_statistical_abstract_2020/he/%D7%94%D7%A9%D7%A0%D7%AA%D7%95%D7%9F%20%D7%94%D7%A1%D7%98%D7%98%D7%99%D7%A1%D7%98%D7%99%20%D7%A9%D7%9C%20%D7%9E%D7%A9%D7%98%D7%A8%D7%AA%20%D7%99%D7%A9%D7%A8%D7%90%D7%9C%20%D7%9C%D7%A9%D7%A0%D7%AA%202020.pdf), [פה](https://www.odata.org.il/dataset/f4a3cbdb-4c9f-4445-ac8e-221101f825c8), [ופה](https://www.odata.org.il/dataset/e-haim). על אוכלוסייה מ[פה]().
+נתונים על מוקד 100 מ[פה](https://www.gov.il/BlobFolder/reports/police_statistical_abstract_2020/he/%D7%94%D7%A9%D7%A0%D7%AA%D7%95%D7%9F%20%D7%94%D7%A1%D7%98%D7%98%D7%99%D7%A1%D7%98%D7%99%20%D7%A9%D7%9C%20%D7%9E%D7%A9%D7%98%D7%A8%D7%AA%20%D7%99%D7%A9%D7%A8%D7%90%D7%9C%20%D7%9C%D7%A9%D7%A0%D7%AA%202020.pdf), [פה](https://www.odata.org.il/dataset/f4a3cbdb-4c9f-4445-ac8e-221101f825c8), [ופה](https://www.odata.org.il/dataset/e-haim). על אוכלוסייה מ[פה](https://www.cbs.gov.il/he/settlements/Pages/default.aspx?mode=Yeshuv).
 ```r
 # Incoming calls by region, city, day of week (Jan 1 - March 21, 2020)
 day.place.1 <- read_csv("/Users/louisteitelbaum/Documents/moked_janfebmar.csv",
@@ -225,3 +225,15 @@ type.place.year <- type.place.year %>%
   mutate(across(4:7, ~replace(., . == "-", "0"))) %>%
   type_convert()
 ```
+אם רוצים לדעת על סכנת מוות, ובמיוחד במישור ההלכתי, יש לנו הזדמנות בישראל שלא היתה לנו בארה"ב: התנהגות הדתיים. אם בדרך כלל יש אחוז משעותי של פניות למוקד שהם *אינם* מהווים סכנת מוות (ולכן אסורים בשבת על פי הלכה כפי שהיא נהוגה), נוכל לצפות שמספר הפנות ירד באופן משמעותי בשבת, ובמיוחד במקומות אם אוכלוסייה דתית יותר. 
+
+לצערנו, השנתון הסטטיסטי של משטרת ישראל לא מדווח על חלוקה של פניות לימות השבוע. הוא כן מחלק ככה את אירועי התגובה ("מענה לאירוע עקב קריאה שנתקבלה מהציבור או זיהוי עצמי של
+שוטר אשר פתח אירוע במוקד"). הנה הנתונים משנת 2020:
+<p align="center">
+<img src= "figures/moked13.png"/>
+</p>
+
+קשה לי לראות מה קורה בטבלה כזאת. הנה אותו דבר בתרשים:
+<p align="center">
+<img src= "figures/moked14.png"/>
+</p>
