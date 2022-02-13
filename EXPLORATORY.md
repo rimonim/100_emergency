@@ -279,3 +279,79 @@ weekdays %>%
 </p>
 
 בשבת יש פרופורציה קטנה יחסית של אירועי תנועה. זה הגיוני. יש גם פרופורציה *גדולה* יחסית של אירועי איכות חיים. אפשר לנחש שזה מייצג את הבלגן והרעש של סופ"ש. 
+אף אחד מאלה לא מוכיחים שמספר האירועים הכללי בשבת הוא תוצאה של התנהגות הדתיים במדינה. סביר להניח שגם חילינום נוסעים פחות בשבת - אין עבודה - ולכן יש פחות אירועים במשטרה. גם יכול להיות שהמשטרה קצת יותר עצלנית בסופ"שים ולכן מטפלת בקצת פחות אירועים (תזכר שאנחנו מסתכלים רק על אירועי תגובה כרגע).
+
+למרבה המזל, יש לנו נתונים על *פניות* למוקד מחולקים גם לימי השבוע וגם לערים. האם אפשר לראות שלערים עם אוכלוסייה דתית יותר יש הפרש גדול יותר בין הפניות בשבת לבין ימי החול? נסתכל על כמה ערים.
+```r
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# WRANGLE DATA (Incoming calls by region, city, day of week)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Variable names into English
+names(day.place.1) <- c("mahoz", "hodesh", "ir", "yom", "n") -> names(day.place.2)
+
+# Only cities for which we have info on all weekdays for each month
+day.place.1 <- day.place.1 %>%
+  group_by(mahoz, hodesh, ir) %>%
+  filter(n() == 7) %>%
+  ungroup()
+
+day.place.2 <- day.place.2 %>%
+  group_by(mahoz, hodesh, ir) %>%
+  filter(n() == 7) %>%
+  ungroup()
+
+# Combine day.place.1 and day.place.2
+day.place <- bind_rows(day.place.1, day.place.2)
+rm(list = c("day.place.1", "day.place.2"))
+
+# Remove summing rows
+day.place <- day.place[day.place$mahoz != 'סה"כ' & day.place$mahoz != "Total", ]
+day.place <- day.place[day.place$hodesh != "Total" & day.place$ir != "Total" & day.place$yom != "Total", ]
+
+# Rename + Factorize days of the week
+day.place <- day.place %>%
+  mutate(yom = factor(yom, 
+                       levels = c(unique(day.place$yom)[1], 
+                                  unique(day.place$yom)[6], 
+                                  unique(day.place$yom)[7], 
+                                  unique(day.place$yom)[2],
+                                  unique(day.place$yom)[5], 
+                                  unique(day.place$yom)[4],
+                                  unique(day.place$yom)[3]), 
+                       labels = c("שבת", "ו", "ה", "ד", "ג", "ב", "א")))
+
+# One case per weekday per city
+day.place <- day.place %>%
+  group_by(mahoz, ir, yom) %>%
+  summarise(n = sum(n)) %>%
+  ungroup()
+
+day.place <- day.place[day.place$ir != "לא ידוע", ]
+
+# Add variables to see proportion of calls coming in on each day
+day.place <- day.place %>%
+  left_join(demographics) %>%
+  group_by(ir) %>%
+  mutate(daypercent = 100*n/sum(n),
+         callspercap = n/pop) %>%
+  ungroup()
+  
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# VISUALIZE 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+day.place[day.place$ir %in% unique(day.place$ir)[sample(1:56, 25)], ] %>%
+  ggplot(aes(yom, daypercent, fill = (yom == "שבת") )) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ir) +
+  theme(legend.position = "none", 
+        plot.title = element_text(hjust = 0.5)) +
+  labs(x = "יום",
+       y = "אחוז פניות",
+       title = "2020 מינואר לאפריל 100 פניות למוקד ")
+```
+
+<p align="center">
+<img src= "figures/moked1.png"/>
+</p>
