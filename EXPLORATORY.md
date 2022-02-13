@@ -269,7 +269,7 @@ weekdays %>%
   group_by(shabbat) %>%
   summarise(type = type, prop = n/sum(n)) %>%
   ggplot(aes(x = "", prop, fill = type)) +
-    geom_bar(stat = "identity") +
+    geom_bar(stat = "identity", color = "white") +
     facet_wrap(~shabbat) +
     theme_minimal() +
     theme(axis.text.y = element_blank(), axis.title = element_blank(), legend.title = element_blank())
