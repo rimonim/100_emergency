@@ -396,18 +396,24 @@ day.place[day.place$ir %in% unique(day.place$ir)[sample(1:56, 25)], ] %>%
        title = "2020 מינואר לאפריל 100 פניות למוקד ")
 
 # Same but binned by estimated religious population
-day.place %>%
-  left_join(shuls) %>%
-  filter(is.na(shuls) == F, is.na(pop) == F) %>%
-  group_by(shuls/pop > 55/100000) %>%
-  mutate(daypercent = 100*n/sum(n)) %>%
+shulspopmod <- lm(shuls~pop, data = (shuls%>%left_join(demographics)%>%filter(ir != "ירושלים")))
+
+shuls %>%
+  left_join(demographics) %>%
+  filter(ir != "ירושלים", is.na(pop) == F, is.na(shuls) == F) %>%
+  mutate(aboveline = (rstandard(shulspopmod)>0)) %>%
+  inner_join(day.place) %>%
+  group_by(aboveline, yom) %>%
+  summarise(n = sum(n)) %>%
+  group_by(aboveline) %>%
+  summarise(yom = yom, daypercent = 100*n/sum(n)) %>%
   ungroup() %>%
-  ggplot(aes(yom, daypercent, fill = (yom == "שבת") )) +
+  ggplot(aes(yom, daypercent, fill = (yom == "שבת"))) +
   geom_bar(stat = "identity") +
-  facet_wrap(~(shuls/pop > 55/100000)) +
+  facet_wrap(~if_else(aboveline, "ערים עם יותר בתי כנסת מהצפוי על פי האוכלוסייה", "ערים עם פחות בתי כנסת מהצפוי על פי האוכלוסייה")) +
   theme(legend.position = "none", 
         plot.title = element_text(hjust = 0.5)) +
-  labs(x = "יום",
+  labs(x = "",
        y = "אחוז פניות",
        title = "2020 מינואר לאפריל 100 פניות למוקד ")
 
@@ -423,9 +429,10 @@ shuls %>%
 
 shuls %>%
   left_join(demographics) %>%
-  filter(ir != "ירושלים") %>%
+  filter(ir != "ירושלים", is.na(pop) == F, is.na(shuls) == F) %>%
+  mutate(shulspopresid = rstandard(shulspopmod)) %>%
   ggplot(aes(pop, shuls)) +
-    geom_point(aes(color = (shuls/pop > 55/100000))) +
+    geom_point(aes(color = (shulspopresid > 0))) +
     geom_smooth(method = "lm", color = "black", alpha = 0, size = 1) +
     theme_minimal() + 
     theme(legend.position = "none") +
@@ -436,30 +443,36 @@ shuls %>%
 # Does more religious Jewish population predict a lower proportion of 100 calls on shabbat?
 require(MASS)
 
-shab.place <- day.place %>%
+mikvaotpopmod <- lm(mikvaot~pop, data = (mikvaot%>%left_join(demographics)%>%filter(ir != "ירושלים")))
+mikvaot <- mikvaot %>% left_join(demographics) %>% filter(ir != "ירושלים", is.na(pop)==F, is.na(mikvaot)==F) %>% mutate(mikvaotpopresid = rstandard(mikvaotpopmod))
+
+shab.place <- shuls %>% 
   left_join(demographics) %>%
-  filter(pop > 1000) %>%
-  left_join(shuls) %>%
-  left_join(mikvaot) %>%
+  filter(ir != "ירושלים", is.na(pop) == F, is.na(shuls) == F) %>%
   mutate(
-    shulspercap = shuls/pop,
-    mikvaotpercap = mikvaot/pop,
-    peoplepershul = pop/shuls,
-    peoplepermikva = pop/mikvaot,
+    shulspopresid = rstandard(shulspopmod)
   ) %>%
+  left_join(mikvaot) %>%
+  right_join(day.place) %>%
+  filter(pop > 1000) %>%
   filter(yom == "שבת")
 
-mikvamod <- lm(daypercent~peoplepermikva, data = shab.place)
+
+mikvamod <- lm(daypercent~mikvaotpopresid, data = shab.place)
 visualize(mikvamod)
 summary(mikvamod)
-robustmikvamod <- rlm(daypercent~peoplepermikva, data = shab.place)
+robustmikvamod <- rlm(daypercent~mikvaotpopresid, data = shab.place)
 summary(robustmikvamod)
-compare.fits(daypercent~peoplepermikva, data = shab.place, mikvamod, robustmikvamod)
+compare.fits(daypercent~mikvaotpopresid, data = shab.place, mikvamod, robustmikvamod)
 
+shulmod <- lm(daypercent~shulspopresid, data = shab.place)
+visualize(shulmod)
+summary(shulmod)
+robustshulmod <- rlm(daypercent~shulspopresid, data = shab.place)
+summary(robustshulmod)
+compare.fits(daypercent~shulspopresid, data = shab.place, shulmod, robustshulmod)
 
-flexplot(daypercent~peoplepermikva, data = shab.place[shab.place$ir != "ירושלים",])
-
-cor(shab.place$mikvapercap, shab.place$shulpercap, method = "pearson")
+cor(shab.place$mikvaotpopresid, shab.place$shulspopresid, method = "pearson", use = "pairwise.complete.obs")
 
 # Sanity-check: do our two data sets correlate? (one is 2015-2017 and one is 2020)
 
