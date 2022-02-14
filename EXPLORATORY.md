@@ -429,11 +429,14 @@ shuls %>%
 כן. מספר בתי הכנסת בעיר מתואם עם מספר המקוואות (שניהם מחולקים לאוכלוסייה הכללית) r=.64. זה הגיוני - יותר בתי כנסת לאדם, יותר מקוואות לאדם. אפשר גם לראות את מספר בתי הכנסת מול אוכלוסייה הכללית של העיר:
 
 ```r
+shulspopmod <- lm(shuls~pop, data = (shuls%>%left_join(demographics)%>%filter(ir != "ירושלים")))
+
 shuls %>%
   left_join(demographics) %>%
-  filter(ir != "ירושלים") %>%
+  filter(ir != "ירושלים", is.na(pop) == F, is.na(shuls) == F) %>%
+  mutate(shulspopresid = rstandard(shulspopmod)) %>%
   ggplot(aes(pop, shuls)) +
-    geom_point(aes(color = (shuls/pop > 55/100000))) +
+    geom_point(aes(color = (shulspopresid > 0))) +
     geom_smooth(method = "lm", color = "black", alpha = 0, size = 1) +
     theme_minimal() + 
     theme(legend.position = "none") +
@@ -454,26 +457,39 @@ shuls %>%
 # Does more religious Jewish population predict a lower proportion of 100 calls on shabbat?
 require(MASS)
 
-shab.place <- day.place %>%
+mikvaotpopmod <- lm(mikvaot~pop, data = (mikvaot%>%left_join(demographics)%>%filter(ir != "ירושלים")))
+mikvaot <- mikvaot %>% left_join(demographics) %>% filter(ir != "ירושלים", is.na(pop)==F, is.na(mikvaot)==F) %>% mutate(mikvaotpopresid = rstandard(mikvaotpopmod))
+
+shab.place <- shuls %>% 
   left_join(demographics) %>%
-  filter(pop > 1000) %>%
-  left_join(shuls) %>%
-  left_join(mikvaot) %>%
+  filter(ir != "ירושלים", is.na(pop) == F, is.na(shuls) == F) %>%
   mutate(
-    shulspercap = shuls/pop,
-    mikvaotpercap = mikvaot/pop,
-    peoplepershul = pop/shuls,
-    peoplepermikva = pop/mikvaot,
+    shulspopresid = rstandard(shulspopmod)
   ) %>%
+  left_join(mikvaot) %>%
+  right_join(day.place) %>%
+  filter(pop > 1000) %>%
   filter(yom == "שבת")
 
-mikvamod <- lm(daypercent~peoplepermikva, data = shab.place)
+
+mikvamod <- lm(daypercent~mikvaotpopresid, data = shab.place)
 visualize(mikvamod)
 summary(mikvamod)
-robustmikvamod <- rlm(daypercent~peoplepermikva, data = shab.place)
+robustmikvamod <- rlm(daypercent~mikvaotpopresid, data = shab.place)
 summary(robustmikvamod)
-compare.fits(daypercent~peoplepermikva, data = shab.place, mikvamod, robustmikvamod)
+compare.fits(daypercent~mikvaotpopresid, data = shab.place, mikvamod, robustmikvamod)
+
+shulmod <- lm(daypercent~shulspopresid, data = shab.place)
+visualize(shulmod)
+summary(shulmod)
+robustshulmod <- rlm(daypercent~shulspopresid, data = shab.place)
+summary(robustshulmod)
+compare.fits(daypercent~shulspopresid, data = shab.place, shulmod, robustshulmod)
 ```
 
 בלי להכנס לכל הטכניקה... התשובה היא לא. לא רואים שום קשר לינארי בין אוכלוסייה דתית לפניות למוקד בשבת. אני עוד לא יודע מה לעשות עם זה. אכן, היו נתונים לכל ימי השבוע רק ב42 ערים, וגם אז בהרבה מהם לא היו נתונים לכל אורך הזמן בין ינואר לאפריל 2020. אולי זאת הבעיה? מה שגם מוסיף קושי זה שהנתונים אינם מחולקים לסוגי האירוע - רק לימים. לו היה לי מערך נתונים מחולק גם לימים וגם לערים, אולי הייתי מוצא משהו.
 
+מתוך ייאוש מוחלט, אני אנסה עם דיסקרטיזציה לשני חלקים - התכלת והאדום שאינו לעיל על גרף האוכלוסייה ומספר בתי הכנסת.
+<p align="center">
+<img src= "figures/moked16.png"/>
+</p>
