@@ -493,3 +493,8 @@ compare.fits(daypercent~shulspopresid, data = shab.place, shulmod, robustshulmod
 <p align="center">
 <img src= "figures/moked16.png"/>
 </p>
+
+
+<p align="center">
+<img src= "figures/moked17.png"/>
+</p>
