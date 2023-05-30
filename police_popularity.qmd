@@ -1,0 +1,238 @@
+---
+title: "מוקד 100 והציבור - יחסי גומלין"
+author: "Louis Teitelbaum"
+date: "May 14, 2023"
+categories: [R, Data Retrieval, עברית]
+image: trustinpolice.png
+dir: rtl
+---
+
+```{r setup}
+#| include: false
+
+# Data manipulation
+library(tidyverse)
+# Web scraping
+library(rvest)
+# Graphics that can deal with Hebrew text
+library(ragg)
+locale("he")
+
+load("data/preprocessed.RData")
+```
+
+### אמון במשטרה
+
+https://dataisrael.idi.org.il הנתונים באדיבות מרכז ויטרבי לחקר דעת קהל ומדיניות שבמכון הישראלי לדמוקרטיה
+
+```{r}
+IDI_filenames <- lapply(c(2000, 2002:2021), function(date){paste0("data/IDI_", date, ".csv")})
+IDI <- lapply(IDI_filenames, read_csv)
+IDI <- lapply(IDI, function(d){mutate(d, across(everything(), as.character))})
+IDI <- bind_rows(IDI)
+
+# variables of interest
+IDI <- IDI %>% 
+  mutate(identity = case_when(!is.na(identity...138) ~ identity...138, 
+                              !is.na(identity...138) ~ identity...138, 
+                              !is.na(identity...1002) ~ identity...1002, 
+                              !is.na(identity...1543) ~ identity...1543),
+         sex = sex...70) %>% 
+  select(month, year, trust_police, trust_gov, 
+         age, age_fact, age_group, edu_fact, edu_yrs, edu_yrs_fact,
+         sex, pol_interest, pol_news, religion_arabs, religion, religion_other,
+         identity, identity_other, arab_jew, arabs)
+
+# find different level codings of trust_police
+IDI %>% 
+  group_by(year, arab_jew) %>% 
+  summarise(n()) %>% View()
+
+
+IDI <- IDI %>% 
+  mutate(year = as.integer(year),
+         month = as.integer(month),
+         age = as.integer(age),
+         year_precise = year + (month/12),
+         religion = case_when(!is.na(religion) ~ religion, 
+                              !is.na(religion_other) ~ religion_other, 
+                              .default = religion_arabs),
+         arab_jew = case_when(arabs == '1' ~ 'יהודים',
+                              arabs == '2' ~ 'ערבים',
+                              arab_jew %in% c('יהודים', 'יהודי') ~ 'יהודים',
+                              arab_jew %in% c('ערבים', 'ערבי') ~ 'ערבים',
+                              is.na(arab_jew) ~ NA,
+                              .default = 'אחר'),
+         coding = case_when(year <= 2007 | (year >= 2011 & year <= 2012) ~ 1,
+                            year >= 2008 & year <= 2010 ~ 2,
+                            year == 2013 ~ 3,
+                            year >= 2014 ~ 4),
+         trust_police = case_when(trust_police %in% c("בכלל אין לי אמון",
+                                                      "כלל אין לי אמון",
+                                                      "בכלל אין אמון",
+                                                      "1 - בכלל אין לי אמון",
+                                                      "כלל אין אמון",
+                                                      "אין אמון כלל",
+                                                      "אין לי בכלל אמון"
+                                                      ) ~ 1,
+                                  trust_police %in% c("במידה מועטה",
+                                                      "במידה מעטה",
+                                                      "יש לי מעט אמון",
+                                                      "2 - יש לי מעט אימון",
+                                                      "יש לי די מעט אמון"
+                                                      ) ~ 2,
+                                  trust_police %in% c("במידה מסויימת",
+                                                      "במידה מסוימת",
+                                                      "יש לי די אמון",
+                                                      "3 - יש לי די אימון",
+                                                      "יש לי די הרבה אמון"
+                                                      ) ~ 3,
+                                  trust_police %in% c("במידה רבה",
+                                                      "יש לי הרבה אמון",
+                                                      "4 - יש לי הרבה אימון",
+                                                      "יש לי הרבה מאוד אמון"
+                                                      ) ~ 4,
+                                  .default = NA),
+         trust_gov = case_when(trust_gov %in% c("בכלל אין לי אמון",
+                                                "כלל אין לי אמון",
+                                                "בכלל אין אמון",
+                                                "1 - בכלל אין לי אמון",
+                                                "כלל אין אמון",
+                                                "אין אמון כלל",
+                                                "אין לי בכלל אמון"
+                                                ) ~ 1,
+                              trust_gov %in% c("במידה מועטה",
+                                                "במידה מעטה",
+                                                "יש לי מעט אמון",
+                                                "2 - יש לי מעט אימון",
+                                                "יש לי די מעט אמון"
+                                                ) ~ 2,
+                              trust_gov %in% c("במידה מסויימת",
+                                                "במידה מסוימת",
+                                                "יש לי די אמון",
+                                                "3 - יש לי די אימון",
+                                                "יש לי די הרבה אמון"
+                                                ) ~ 3,
+                              trust_gov %in% c("במידה רבה",
+                                                "יש לי הרבה אמון",
+                                                "4 - יש לי הרבה אימון",
+                                                "יש לי הרבה מאוד אמון"
+                                                ) ~ 4,
+                              .default = NA)
+         )
+
+trust_IDI <- tibble(
+  year = 2003:2021,
+  percent_trust_jews = c(67.5, 66.9, 56.5,
+                         42.9, 40.3, 31.3, 40.3, 44.6, 
+                         59.1, 60.6, 61.9, 44.4, 42.2, 
+                         41.9, 42, 52.3, 44.4, mean(41, 44.3),
+                         mean(41.9, 33.5)),
+  percent_trust_arabs = c(56.5, 60.8, 53.5,
+                          48.9, 39.6, 33, 17.8, 22.9, 
+                          38.9, 61.9, 43.5, 59.5, 43.8, 
+                          27.3, 29.4, 17.9, 38.3, mean(32.9, 25.8),
+                         mean(13.3, 22.1))
+)
+
+IDI_byyear <- IDI %>% 
+  group_by(year, arab_jew) %>% 
+  filter(arab_jew != 'אחר') %>% 
+  summarise(trust_police = mean(trust_police, na.rm = T),
+            trust_gov = mean(trust_gov, na.rm = T))
+
+IDI %>% 
+  group_by(year_precise, arab_jew) %>% 
+  filter(arab_jew != 'אחר') %>% 
+  summarise(trust_police = mean(trust_police, na.rm = T),
+            trust_gov = mean(trust_gov, na.rm = T)) %>% 
+  drop_na() %>% 
+  ggplot() +
+    geom_area(aes(year, calls/3000000), data = moked, fill = 'lightgrey') +
+    geom_line(aes(year_precise, trust_police, color = arab_jew)) +
+    theme_minimal()
+
+IDI %>% 
+  group_by(year, arab_jew) %>% 
+  filter(arab_jew != 'אחר') %>% 
+  summarise(trust_police = mean(trust_police, na.rm = T),
+            trust_gov = mean(trust_gov, na.rm = T)) %>% 
+  left_join(moked) %>% 
+  ggplot() +
+    geom_point(aes(trust_police, calls)) +
+    theme_minimal()
+
+```
+
+### פניות למוקד
+
+```{r}
+moked <- tibble(
+  year = 2003:2021,
+  calls = c(NA, NA, NA,
+            NA, NA, NA, 10087191, mean(8411990,8463645),
+            8081250, mean(8462931, 8455278, 8455278), mean(9208890, 9218107, 9215914), mean(8230516, 8228476), 7452941,
+            6907081, 7062772, 8287527, 8815017, 9283051,
+            9265746),
+  calls_110 = c(NA, NA, NA,
+                NA, NA, NA, NA, NA,
+                NA, NA, NA, NA, 375498,
+                857826, 1600345, 1825573, 1952490, 2459646,
+                2726681),
+  answered = c(NA, NA, NA,
+               NA, NA, NA, mean(940892, 1470314), mean(1029933, 1625261),
+               1781898, 1849291, mean(2111214, 1978657), mean(2286854, 2072764), mean(2153435, 2165956),
+               2298233, 2340883, 2563693, 2606551, 2820671,
+               2848259)
+)
+```
+
+### גורמים אחרים במשטרה
+
+1.  Number of police (minus BP?)
+2.  Crime?
+
+### דמוגרפיה כללית
+
+```{r}
+demographics <- tibble(
+  year = 2003:2021,
+  population = c(6689700, 6809000, 6930100,
+               7053700, 7180100, 7308800, 7485600, 7623600, 
+               7765800, 7910500, 8059500, 8215700, 8380100, 
+               8546000, 8713300, 8882800, 9054000, 9215100, 
+               9364000)
+)
+```
+
+### Graphical Analysis
+
+```{r}
+demographics %>% 
+  left_join(moked) %>% 
+  ggplot(aes(year)) +
+  geom_area(aes(y = calls/population, fill = "100שיחות נכנסות למוקד "), alpha = .8) +
+  geom_area(aes(y = answered/population, fill = "שיחות שקיבלו מענה משטרתי"), alpha = .8) +
+  geom_line(aes(y = trust_police_יהודים/3, color = "יש אמון במשטרה) ?יהודים("), linewidth = 2,
+            data = IDI_byyear %>% 
+              pivot_wider(id_cols = 'year', 
+                          names_from = 'arab_jew', 
+                          values_from = c('trust_police', 'trust_gov'))) +
+  geom_line(aes(y = trust_police_ערבים/3, color = "יש אמון במשטרה) ?ערבים("), linewidth = 2,
+            data = IDI_byyear %>% 
+              pivot_wider(id_cols = 'year', 
+                          names_from = 'arab_jew', 
+                          values_from = c('trust_police', 'trust_gov'))) +
+  theme_minimal() +
+  labs(x = "שנה") + 
+  theme(legend.title = element_blank()) +
+  scale_fill_manual(values = c("lightgrey", "darkgrey")) +
+  coord_cartesian(xlim = c(2010, 2021)) +
+  scale_y_continuous("מספר אירועים ביחס לאוכלוסיה", 
+                     sec.axis = sec_axis(~ .*75, name = "אחוז המדווחים על אמון במשטרה"))
+
+IDI %>% 
+  ggplot()
+
+
+```
