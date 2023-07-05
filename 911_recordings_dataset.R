@@ -44,15 +44,14 @@ for (i in 1:nrow(recordings_metadata)) {
   }
 }
 
-# list successfully downloaded ids
-downloaded_ids <- list.files("data/911_recordings/") %>% 
-  str_remove("call_") %>% 
-  str_remove(".mp3") %>% 
-  as.integer()
+# Check that file was properly downloaded and list its filename
+file_list <- list.files("data/911_recordings/")
+file_list <- data.frame(file_name = file_list,
+                        id = as.integer(str_extract(file_list, "(?<=_)[:digit:]+(?=.mp3)")))
 
 recordings_metadata <- recordings_metadata %>% 
-  mutate(file_downloaded = id %in% downloaded_ids)
+  left_join(file_list)
 
 # Write CSV
-write_csv(recordings_metadata, "data/911_reels.csv", na = "")
+write_csv(recordings_metadata, "data/911_metadata.csv", na = "")
 
